@@ -102,6 +102,13 @@ module.exports = (env = {}, argv) => {
                         }
                     }]
                 },
+                
+                 // Shaders
+                 {
+                    test: /\.(glsl)$/,
+                    exclude: /node_modules/,
+                    use: ['raw-loader']
+                },
 
                 // Loading CSS
                 {
