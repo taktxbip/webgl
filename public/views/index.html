@@ -7,14 +7,12 @@
 </head>
 
 <body>
-            <%= _.template(require('./../includes/header.html').default)(data) %>
-                <div id="wrapper">
-                    <div id="main">
-                    </div>
-                </div>
-                <!-- #wrapper -->
+    <%= _.template(require('./../includes/header.html').default)(data) %>
+        <div id="container">
+        </div>
+        <!-- #wrapper -->
 
-                <%= _.template(require('./../includes/footer.html').default)() %>
+        <%= _.template(require('./../includes/footer.html').default)() %>
 </body>
 
 </html>
