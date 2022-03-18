@@ -5,7 +5,7 @@ import FontFaceObserver from 'fontfaceobserver';
 
 import fragment from '../shaders/fragment.glsl';
 import vertex from '../shaders/vertex.glsl';
-// import Scroll from '../scroll';
+import Scroll from '../scroll';
 
 import ocean from '../../images/ocean.jpeg';
 
@@ -47,12 +47,6 @@ export default class Sketch {
             });
         });
 
-        // const fontPlayfair = new Promise(resolve => {
-        //     new FontFaceObserver("Playfair Display").load().then(() => {
-        //         resolve();
-        //     });
-        // });
-
         // Preload images
         const preloadImages = new Promise((resolve, reject) => {
             imagesLoaded(document.querySelectorAll("img"), { background: true }, resolve);
@@ -60,7 +54,6 @@ export default class Sketch {
 
         const allPromises = [fontRoboto, preloadImages];
         Promise.all(allPromises).then(() => {
-            console.log('load');
             this.scroll = new Scroll();
             this.addImages();
             this.setPositions();
@@ -72,6 +65,7 @@ export default class Sketch {
     }
 
     setPositions() {
+        console.log('setPositions');
         this.imageStore.forEach(o => {
             o.mesh.position.y = this.currentScroll - o.top + this.height / 2 - o.height / 2;
             o.mesh.position.x = o.left - this.width / 2 + o.width / 2;
@@ -83,11 +77,8 @@ export default class Sketch {
             const bounds = img.getBoundingClientRect();
 
             const { top, left, height, width } = bounds;
-
             const geometry = new THREE.PlaneBufferGeometry(width, height, 10, 10);
-
             const texture = new THREE.TextureLoader().load(img.src);
-            // const texture = new THREE.Texture(img);
             texture.needsUpdate = true;
 
             const material = new THREE.MeshBasicMaterial({
@@ -105,9 +96,9 @@ export default class Sketch {
     }
 
     events() {
-        window.addEventListener('resize', this.resize.bind(this));
-        window.addEventListener('scroll', () => {
-            this.currentScroll = window.scrollY;
+        window.addEventListener('resize', () => {
+            console.log('resize');
+            this.resize();
             this.setPositions();
         });
     }
@@ -127,8 +118,7 @@ export default class Sketch {
     addObjects() {
 
         this.geometry = new THREE.PlaneBufferGeometry(100, 100, 10, 10);
-        // this.geometry = new THREE.SphereBufferGeometry(0.4, 100, 100);
-        this.material = new THREE.MeshNormalMaterial();
+
         this.material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
@@ -145,16 +135,14 @@ export default class Sketch {
     }
 
     render() {
-        this.time += 0.05;
+        console.log('render');
+        // this.time += 0.05;
 
         this.scroll.render();
         this.currentScroll = this.scroll.scrollToRender;
-        // this.setPositions();
+        this.setPositions();
 
-        // this.mesh.rotation.x = this.time / 2000;
-        // this.mesh.rotation.y = this.time / 1000;
-
-        this.material.uniforms.time.value = this.time;
+        // this.material.uniforms.time.value = this.time;
 
         this.renderer.render(this.scene, this.camera);
         window.requestAnimationFrame(this.render.bind(this));
