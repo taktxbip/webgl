@@ -21,10 +21,8 @@ module.exports = (env = {}, argv) => {
     const runShell = () => {
         switch (process.platform) {
             case 'darwin': return [
-                'cp public/index.php ./dist/index.php'
             ];
             default: return [
-                'cp public/index.php ./dist/index.php'
             ];
         }
     };
