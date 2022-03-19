@@ -10,7 +10,9 @@ body {
 body.fh5co-offcanvas {
   overflow: hidden;
 }
-
+img {
+    opacity: 0;
+}
 a {
   color: #2da9d7;
   -webkit-transition: 0.5s;
@@ -123,7 +125,6 @@ figure {
 .fh5co-projects-feed .fh5co-project > a img {
   margin-bottom: 30px;
   width: 100%;
-  opacity: 0;
 }
 .fh5co-projects-feed .fh5co-project > a h2 {
   font-size: 14px;

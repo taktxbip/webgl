@@ -3,21 +3,39 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import imagesLoaded from 'imagesloaded';
 import FontFaceObserver from 'fontfaceobserver';
 import gsap from 'gsap';
-
-import fragment from '../shaders/fragment.glsl';
-import vertex from '../shaders/vertex.glsl';
 import Scroll from '../scroll';
 
-import ocean from '../../images/ocean.jpeg';
-import { CompressedTextureLoader } from 'three';
+// Postprocessing
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+// import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+// Shaders
+import fragment from '../shaders/fragment.glsl';
+import vertex from '../shaders/vertex.glsl';
+import vertexDistortion from '../shaders/vertex-distortion.glsl';
+import fragmentDistortion from '../shaders/fragment-distortion.glsl';
 
 export default class Sketch {
     constructor(options) {
         this.time = 0;
         this.dom = options.dom;
         this.currentScroll = 0;
+        this.material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                uImage: { value: 0 },
+                hover: { value: new THREE.Vector2(0.5, 0.5) },
+                hoverState: { value: 0 }
+            },
+            side: THREE.DoubleSide,
+            fragmentShader: fragment,
+            vertexShader: vertex,
+            wireframe: false
+        });
         this.materials = [];
-
+        this.planeSegments = 40;
 
         this.width = this.dom.offsetWidth;
         this.height = this.dom.offsetHeight;
@@ -67,6 +85,7 @@ export default class Sketch {
             this.setPositions();
             this.resize();
             this.events();
+            this.composerPass();
             this.render();
         });
     }
@@ -78,27 +97,34 @@ export default class Sketch {
         });
     }
 
-    addImages() {
-        this.material = new THREE.ShaderMaterial({
-            uniforms: {
-                time: { value: 0 },
-                uImage: { value: 0 },
-                hover: { value: new THREE.Vector2(0.5, 0.5) },
-                hoverState: { value: 0 },
-                oceanTexture: { value: new THREE.TextureLoader().load(ocean) }
-            },
-            side: THREE.DoubleSide,
-            fragmentShader: fragment,
-            // vertexShader: vertexDefault,
-            vertexShader: vertex
-            // wireframe: true
-        });
+    composerPass() {
+        this.composer = new EffectComposer(this.renderer);
+        this.renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(this.renderPass);
 
+        //custom shader pass
+        var counter = 0.0;
+        this.myEffect = {
+            uniforms: {
+                tDiffuse: { value: 0 },
+                scrollSpeed: { value: 0 }
+            },
+            vertexShader: vertexDistortion,
+            fragmentShader: fragmentDistortion
+        }
+
+        this.customPass = new ShaderPass(this.myEffect);
+        this.customPass.renderToScreen = true;
+
+        this.composer.addPass(this.customPass);
+    }
+
+    addImages() {
         this.imageStore = this.images.map(img => {
             const bounds = img.getBoundingClientRect();
 
             const { top, left, height, width } = bounds;
-            const geometry = new THREE.PlaneBufferGeometry(width, height, 100, 100);
+            const geometry = new THREE.PlaneBufferGeometry(width, height, this.planeSegments, this.planeSegments);
             const texture = new THREE.TextureLoader().load(img.src);
             texture.needsUpdate = true;
 
@@ -171,15 +197,14 @@ export default class Sketch {
         this.currentScroll = this.scroll.scrollToRender;
         this.setPositions();
 
+        this.customPass.uniforms.scrollSpeed.value = this.scroll.speedTarget;
+
         this.materials.forEach(m => {
             m.uniforms.time.value = this.time;
         });
 
-        this.renderer.render(this.scene, this.camera);
+        // this.renderer.render(this.scene, this.camera);
+        this.composer.render(this.scene, this.camera);
         window.requestAnimationFrame(this.render.bind(this));
     }
 }
-
-
-
-
