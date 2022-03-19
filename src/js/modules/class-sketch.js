@@ -16,6 +16,8 @@ import fragment from '../shaders/fragment.glsl';
 import vertex from '../shaders/vertex.glsl';
 import vertexDistortion from '../shaders/vertex-distortion.glsl';
 import fragmentDistortion from '../shaders/fragment-distortion.glsl';
+import perlinNoise from '../shaders/perlin-3d-noise.glsl';
+
 
 export default class Sketch {
     constructor(options) {
@@ -114,7 +116,7 @@ export default class Sketch {
                 scrollSpeed: { value: 0 }
             },
             vertexShader: vertexDistortion,
-            fragmentShader: fragmentDistortion
+            fragmentShader: perlinNoise + fragmentDistortion
         };
 
         this.customPass = new ShaderPass(this.myEffect);
@@ -172,7 +174,8 @@ export default class Sketch {
             this.mouse.y = - (e.clientY / this.height) * 2 + 1;
 
             this.raycaster.setFromCamera(this.mouse, this.camera);
-            // // calculate objects intersecting the picking ray
+
+            // calculate objects intersecting the picking ray
             const intersects = this.raycaster.intersectObjects(this.scene.children);
 
             if (intersects.length > 0) {
