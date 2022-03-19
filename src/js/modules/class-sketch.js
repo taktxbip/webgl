@@ -22,6 +22,7 @@ export default class Sketch {
         this.time = 0;
         this.dom = options.dom;
         this.currentScroll = 0;
+        this.previousScroll = 0;
         this.material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
@@ -56,9 +57,10 @@ export default class Sketch {
 
         // renderer
         this.renderer = new THREE.WebGLRenderer({
-            antialias: true,
+            antialias: false,
             alpha: true
         });
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.setSize(this.width, this.height);
         this.dom.appendChild(this.renderer.domElement);
 
@@ -92,6 +94,7 @@ export default class Sketch {
 
     setPositions() {
         this.imageStore.forEach(o => {
+            // check if image is visible
             o.mesh.position.y = this.currentScroll - o.top + this.height / 2 - o.height / 2;
             o.mesh.position.x = o.left - this.width / 2 + o.width / 2;
         });
@@ -106,12 +109,13 @@ export default class Sketch {
         var counter = 0.0;
         this.myEffect = {
             uniforms: {
+                time: { value: 0 },
                 tDiffuse: { value: 0 },
                 scrollSpeed: { value: 0 }
             },
             vertexShader: vertexDistortion,
             fragmentShader: fragmentDistortion
-        }
+        };
 
         this.customPass = new ShaderPass(this.myEffect);
         this.customPass.renderToScreen = true;
@@ -124,7 +128,7 @@ export default class Sketch {
             const bounds = img.getBoundingClientRect();
 
             const { top, left, height, width } = bounds;
-            const geometry = new THREE.PlaneBufferGeometry(width, height, this.planeSegments, this.planeSegments);
+            const geometry = new THREE.PlaneBufferGeometry(1, 1, this.planeSegments, this.planeSegments);
             const texture = new THREE.TextureLoader().load(img.src);
             texture.needsUpdate = true;
 
@@ -148,6 +152,7 @@ export default class Sketch {
             this.materials.push(material);
 
             const mesh = new THREE.Mesh(geometry, material);
+            mesh.scale.set(width, height, 1);
 
             this.scene.add(mesh);
 
@@ -194,17 +199,24 @@ export default class Sketch {
         this.time += 0.05;
 
         this.scroll.render();
+        this.previousScroll = this.currentScroll;
         this.currentScroll = this.scroll.scrollToRender;
+
+        // Optimizations
+        // if (Math.round(this.previousScroll) !== Math.round(this.currentScroll)) {
         this.setPositions();
 
         this.customPass.uniforms.scrollSpeed.value = this.scroll.speedTarget;
+        this.customPass.uniforms.time.value = this.time;
 
         this.materials.forEach(m => {
             m.uniforms.time.value = this.time;
         });
 
         // this.renderer.render(this.scene, this.camera);
+        // }
         this.composer.render(this.scene, this.camera);
         window.requestAnimationFrame(this.render.bind(this));
+
     }
 }
